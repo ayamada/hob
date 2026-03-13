@@ -2,6 +2,9 @@
 
 A minimal, property-centric DOM builder inspired by Clojure's Hiccup.
 
+[![npm version](https://img.shields.io/npm/v/@tir.jp/hob.svg)](https://www.npmjs.com/package/@tir.jp/hob)
+[![License](https://img.shields.io/npm/l/@tir.jp/hob.svg)](https://github.com/ayamada/hob/blob/main/LICENSE)
+
 ## Features
 
 - **Lightweight:** Tiny footprint (less than 1KB).
@@ -15,6 +18,8 @@ A minimal, property-centric DOM builder inspired by Clojure's Hiccup.
 ```bash
 npm install @tir.jp/hob
 ```
+
+NPM Package: [@tir.jp/hob](https://www.npmjs.com/package/@tir.jp/hob)
 
 ## Usage
 
@@ -65,6 +70,10 @@ Takes a Hiccup-style array and returns an `HTMLElement`.
 
 ### `setAttr(htmlObj, attrObj)`
 Recursively assigns properties from `attrObj` to `htmlObj`.
+
+## Repository
+
+- GitHub: [ayamada/hob](https://github.com/ayamada/hob)
 
 ## License
 
