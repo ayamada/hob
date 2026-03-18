@@ -1,8 +1,8 @@
 // Tag can be a string (HTML tag) or a functional component
-export type HiccupTag = string | ((attrs: Record<string, any>, ...children: any[]) => HiccupTree);
+export type HiccupTag = string | ((...args: any[]) => (HiccupTree | HTMLElement));
 
 export type HiccupTree = 
-  | [HiccupTag, Record<string, any>?, ...(HiccupTree | HTMLElement | string | number | null | undefined)[]]
+  | [HiccupTag, ...any[]]
   | string | number | HTMLElement | null | undefined;
 
 /**
