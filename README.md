@@ -59,6 +59,9 @@ const app = Hob.build([
 document.body.appendChild(app);
 ```
 
+### More examples
+And see [test.mjs](test.mjs)
+
 ## API
 
 ### `build(treeArray)`

@@ -6,14 +6,14 @@
  */
 export const setAttr = (htmlObj, attrObj) => {
   Object.entries(attrObj).forEach(([k, v]) => {
-    if (k === 'class') k = 'className';
-    if (k === 'style' && typeof v === 'string') {
-      htmlObj.style.cssText = v;
+    if (v?.constructor === Object) {
+      setAttr(htmlObj[k], v); // for {style: {...}}
+    } else if (k === 'style' && typeof v === 'string') {
+        htmlObj.style.cssText = v; // for {style: "..."}
     } else if (k.includes('-')) {
-      htmlObj.setAttribute(k, v);
-    } else if (v?.constructor === Object) {
-      setAttr(htmlObj[k], v);
+        htmlObj.setAttribute(k, v); // for data- and aria-
     } else {
+      if (k === 'class') { k = 'className' }
       htmlObj[k] = v;
     }
   });

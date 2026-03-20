@@ -1,9 +1,7 @@
 // Tag can be a string (HTML tag) or a functional component
 export type HiccupTag = string | ((...args: any[]) => (HiccupTree | HTMLElement));
 
-export type HiccupTree = 
-  | [HiccupTag, ...any[]]
-  | string | number | HTMLElement | null | undefined;
+export type HiccupTree = [HiccupTag, ...any[]];
 
 /**
  * Recursively sets attributes/properties on an HTMLElement.
