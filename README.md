@@ -78,6 +78,10 @@ Recursively assigns properties from `attrObj` to `htmlObj`.
 
 - GitHub: [ayamada/hob](https://github.com/ayamada/hob)
 
+## ChangeLog
+
+- See [ChangeLog.md](ChangeLog.md)
+
 ## License
 
 Zlib
