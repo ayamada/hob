@@ -19,6 +19,8 @@ export const setAttr = (htmlObj, attrObj) => {
   });
 };
 
+const isValidTag = (tag) => ((tag?.constructor === String) || (typeof tag === 'function'));
+
 /**
  * Builds an HTMLElement tree from a nested array (Hiccup format).
  * Supports functional components: [Function, ...args] -> Function(...args)
@@ -31,11 +33,11 @@ export const build = (treeArray) => {
     throw new Error('HOB: build(treeArray) requires an array.');
   }
 
-  const tag = treeArray[0];
+  const [tag, ... queue] = treeArray;
 
   // Functional Component Support (Lisp-style: [Fn, ...args] -> Fn(...args))
   if (typeof tag === 'function') {
-    const res = tag(...treeArray.slice(1));
+    const res = tag(... queue);
     // If the component returns a DOM element directly, return it.
     // Otherwise, recursively build the returned Hiccup tree.
     return (res instanceof HTMLElement) ? res : build(res);
@@ -43,14 +45,18 @@ export const build = (treeArray) => {
 
   const htmlObj = document.createElement(tag);
 
-  for (let i = 1; i < treeArray.length; i++) {
-    const one = treeArray[i];
+  while (queue.length) {
+    const one = queue.shift();
     if (one == null) {
       continue;
     } else if (one?.constructor === Object) {
       setAttr(htmlObj, one);
     } else if (Array.isArray(one)) {
-      htmlObj.appendChild(build(one));
+      if (isValidTag(one[0])) {
+        htmlObj.appendChild(build(one));
+      } else {
+        queue.unshift(... one);
+      }
     } else if (one instanceof HTMLElement) {
       htmlObj.appendChild(one);
     } else {

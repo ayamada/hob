@@ -23,14 +23,22 @@ test('Basic: nested elements', () => {
   const el = Hob.build([
     "DIV",
     ["P", "paragraph"],
-    ["SPAN", "span"]
+    ["SPAN", "span"],
+    [ // expand children if first element is neither String nor Function
+      ["P", "p1"],
+      ["P", "p2"],
+      ["P", "p3"],
+    ]
   ]);
   
-  assert.strictEqual(el.children.length, 2);
+  assert.strictEqual(el.children.length, 5);
   assert.strictEqual(el.children[0].tagName, "P");
   assert.strictEqual(el.children[0].textContent, "paragraph");
   assert.strictEqual(el.children[1].tagName, "SPAN");
   assert.strictEqual(el.children[1].textContent, "span");
+  assert.strictEqual(el.children[2].textContent, "p1");
+  assert.strictEqual(el.children[3].textContent, "p2");
+  assert.strictEqual(el.children[4].textContent, "p3");
 });
 
 test('QoL: class mapping', () => {
