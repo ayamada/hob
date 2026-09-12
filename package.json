@@ -1,6 +1,6 @@
 {
   "name": "@tir.jp/hob",
-  "version": "2.2.0-SNAPSHOT",
+  "version": "2.2.0",
   "description": "A minimal, property-centric DOM builder inspired by Clojure's Hiccup.",
   "type": "module",
   "main": "index.mjs",
@@ -41,7 +41,8 @@
   ],
   "author": "ayamada",
   "contributors": [
-    "mac"
+    "mac",
+    "pik"
   ],
   "license": "Zlib",
   "publishConfig": {
