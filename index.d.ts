@@ -1,5 +1,8 @@
+// What a tag or a functional component may return.
+export type HiccupResult = HiccupTree | Node | boolean | null | undefined;
+
 // Tag can be a string (HTML tag) or a functional component
-export type HiccupTag = string | ((...args: any[]) => (HiccupTree | HTMLElement));
+export type HiccupTag = string | ((...args: any[]) => HiccupResult);
 
 export type HiccupChild =
   | Record<string, any>
@@ -8,7 +11,7 @@ export type HiccupChild =
   | boolean
   | null
   | undefined
-  | HTMLElement
+  | Node
   | HiccupTree
   | HiccupChild[];
 
@@ -21,5 +24,6 @@ export declare function setAttr(htmlObj: any, attrObj: Record<string, any>): voi
 
 /**
  * Builds an HTMLElement tree from a nested array (Hiccup format).
+ * Returns null when the tree renders nothing (e.g. a component returning null).
  */
-export declare function build(treeArray: HiccupTree): HTMLElement;
+export declare function build(treeArray: HiccupTree): HTMLElement | null;

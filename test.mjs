@@ -106,3 +106,100 @@ test('Edge cases: HTMLElement as child', () => {
   assert.strictEqual(el.children[0].tagName, "SECTION");
   assert.strictEqual(el.children[0].textContent, "existing");
 });
+
+test('Attr: style object with kebab-case key', () => {
+  const el = Hob.build(["DIV", { style: { "background-color": "red" } }]);
+  assert.strictEqual(el.style.backgroundColor, "red");
+});
+
+test('Attr: nested object on a non-existent property is just assigned', () => {
+  const el = Hob.build(["DIV", { foo: { bar: 1 } }]);
+  assert.deepStrictEqual(el.foo, { bar: 1 });
+});
+
+test('Attr: nested object on dataset', () => {
+  const el = Hob.build(["DIV", { dataset: { foo: "bar" } }]);
+  assert.strictEqual(el.getAttribute("data-foo"), "bar");
+});
+
+test('Attr: for is mapped to htmlFor', () => {
+  const el = Hob.build(["LABEL", { for: "name" }, "Name"]);
+  assert.strictEqual(el.getAttribute("for"), "name");
+});
+
+test('Attr: style object with null prototype', () => {
+  const el = Hob.build(["DIV", { style: Object.assign(Object.create(null), { color: "red" }) }]);
+  assert.strictEqual(el.style.color, "red");
+});
+
+test('Attr: setAttr() directly', () => {
+  const el = document.createElement("DIV");
+  Hob.setAttr(el, { id: "x", "data-v": 1, style: { color: "red" } });
+  assert.strictEqual(el.id, "x");
+  assert.strictEqual(el.getAttribute("data-v"), "1");
+  assert.strictEqual(el.style.color, "red");
+});
+
+test('Attr: event handler property', () => {
+  let clicked = 0;
+  const el = Hob.build(["BUTTON", { onclick: () => { clicked++ } }, "go"]);
+  el.dispatchEvent(new dom.window.MouseEvent("click"));
+  assert.strictEqual(clicked, 1);
+});
+
+test('Children: booleans render nothing', () => {
+  const el = Hob.build(["DIV", false, true, "text"]);
+  assert.strictEqual(el.textContent, "text");
+  assert.strictEqual(el.childNodes.length, 1);
+});
+
+test('Children: falsy conditional renders nothing', () => {
+  const el = Hob.build(["DIV", false && ["P", "x"], ["P", "y"]]);
+  assert.strictEqual(el.children.length, 1);
+  assert.strictEqual(el.children[0].textContent, "y");
+});
+
+test('Children: existing Node is reused as-is', () => {
+  const text = document.createTextNode("hi");
+  const el = Hob.build(["DIV", text]);
+  assert.strictEqual(el.childNodes[0], text);
+  assert.strictEqual(el.textContent, "hi");
+});
+
+test('Children: DocumentFragment is appended', () => {
+  const frag = document.createDocumentFragment();
+  frag.appendChild(document.createElement("P"));
+  const el = Hob.build(["DIV", frag]);
+  assert.strictEqual(el.children.length, 1);
+  assert.strictEqual(el.children[0].tagName, "P");
+});
+
+test('Children: SVGElement is appended, not stringified', () => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const el = Hob.build(["DIV", svg]);
+  assert.strictEqual(el.children[0], svg);
+  assert.strictEqual(el.textContent, "");
+});
+
+test('Children: number is rendered as text', () => {
+  assert.strictEqual(Hob.build(["DIV", 42]).textContent, "42");
+});
+
+test('Function Components: returning nothing renders nothing', () => {
+  const el = Hob.build(["DIV", [() => null], [() => undefined], ["P", "x"]]);
+  assert.strictEqual(el.children.length, 1);
+  assert.strictEqual(el.children[0].textContent, "x");
+  assert.strictEqual(Hob.build([() => null]), null);
+});
+
+test('Function Components: returning a Node directly', () => {
+  const existing = document.createElement("SECTION");
+  assert.strictEqual(Hob.build([() => existing]), existing);
+});
+
+test('Edge cases: invalid root tag throws', () => {
+  assert.throws(() => Hob.build([]), /requires a non-empty tag name/);
+  assert.throws(() => Hob.build([123, "x"]), /requires a non-empty tag name/);
+  assert.throws(() => Hob.build(["", "x"]), /requires a non-empty tag name/);
+  assert.throws(() => Hob.build("not an array"), /requires an array/);
+});

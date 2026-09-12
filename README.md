@@ -7,11 +7,12 @@ A minimal, property-centric DOM builder inspired by Clojure's Hiccup.
 
 ## Features
 
-- **Lightweight:** Tiny footprint (less than 1KB).
+- **Lightweight:** Tiny footprint (about 2 KB of source) and zero dependencies.
 - **Property-centric:** Directly sets DOM properties (like `onclick`, `style.width`) instead of attributes.
 - **Hiccup-like syntax:** Uses standard JavaScript arrays to define DOM structures.
-- **Smart Attributes:** Automatically maps `class` to `className`, supports `style` strings, and correctly handles `data-*` and `aria-*` attributes.
+- **Smart Attributes:** Automatically maps `class` to `className` and `for` to `htmlFor`, supports `style` strings and nested `style` objects, and correctly handles `data-*` and `aria-*` attributes.
 - **Functional Components:** Supports React-like functional components for easy UI reuse.
+- **Conditional Rendering:** `null`, `undefined` and booleans render nothing, so `cond && [...]` just works.
 
 ## Installation
 
@@ -65,14 +66,27 @@ And see [test.mjs](test.mjs)
 ## API
 
 ### `build(treeArray)`
-Takes a Hiccup-style array and returns an `HTMLElement`.
+Takes a Hiccup-style array and returns an `HTMLElement`, or `null` if it renders nothing.
 
-- `treeArray[0]`: Tag name (e.g., `"DIV"`) or a Function.
-- `treeArray[1]` (optional): Attribute/Property object.
-- `...treeArray[2:]`: Children (strings, numbers, arrays, or existing `HTMLElement`s).
+- `treeArray[0]`: Non-empty tag name (e.g., `"DIV"`) or a Function. Anything else throws.
+- Attribute/Property object: accepted at any position, not just `treeArray[1]`. Multiple objects are merged.
+- Children: strings, numbers, arrays, or existing `Node`s (`HTMLElement`, `SVGElement`, `Text`, `DocumentFragment`, ...).
+- `null`, `undefined` and booleans render nothing, so `cond && ["P", "x"]` is safe.
+
+A nested array whose first element is neither a String nor a Function is expanded in place
+(handy for mapping over a list):
+
+```javascript
+Hob.build(["UL", items.map((x) => ["LI", x])]);
+```
 
 ### `setAttr(htmlObj, attrObj)`
 Recursively assigns properties from `attrObj` to `htmlObj`.
+
+- `class` and `for` are mapped to `className` and `htmlFor`.
+- Keys containing `-` (e.g. `data-*`, `aria-*`) are set via `setAttribute`.
+- A nested object is applied to the corresponding property, which is how `{style: {...}}` works.
+  If that property does not exist, the object is simply assigned as-is.
 
 ## Repository
 
