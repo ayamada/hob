@@ -8,7 +8,11 @@ const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;
 global.HTMLElement = dom.window.HTMLElement;
+global.SVGElement = dom.window.SVGElement;
 global.Node = dom.window.Node;
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 test('Basic: build element with attributes and text', () => {
   const el = Hob.build(["DIV", { id: "test", title: "hello" }, "Content"]);
@@ -202,4 +206,117 @@ test('Edge cases: invalid root tag throws', () => {
   assert.throws(() => Hob.build([123, "x"]), /requires a non-empty tag name/);
   assert.throws(() => Hob.build(["", "x"]), /requires a non-empty tag name/);
   assert.throws(() => Hob.build("not an array"), /requires an array/);
+});
+
+test('SVG: the svg tag switches to the SVG namespace', () => {
+  const el = Hob.build(["svg", { viewBox: "0 0 100 100" }, ["circle", { cx: 50, cy: 50, r: 40, fill: "red" }]]);
+
+  assert.strictEqual(el.namespaceURI, SVG_NS);
+  assert.strictEqual(el.tagName, "svg");
+  assert.strictEqual(el.getAttribute("viewBox"), "0 0 100 100");
+
+  const circle = el.children[0];
+  assert.strictEqual(circle.namespaceURI, SVG_NS);
+  assert.strictEqual(circle.tagName, "circle");
+  assert.strictEqual(circle.getAttribute("cx"), "50");
+  assert.strictEqual(circle.getAttribute("r"), "40");
+  assert.strictEqual(circle.getAttribute("fill"), "red");
+});
+
+test('SVG: children inherit the namespace deeply, inside HTML too', () => {
+  const el = Hob.build(["DIV", ["svg", ["g", ["g", ["path", { d: "M0 0" }]]]]]);
+  const svg = el.children[0];
+
+  assert.strictEqual(svg.namespaceURI, SVG_NS);
+  assert.strictEqual(svg.firstChild.namespaceURI, SVG_NS);
+  assert.strictEqual(svg.firstChild.firstChild.namespaceURI, SVG_NS);
+  assert.strictEqual(svg.firstChild.firstChild.firstChild.getAttribute("d"), "M0 0");
+});
+
+test('SVG: class becomes an attribute, not className', () => {
+  const el = Hob.build(["svg", { class: "icon" }]);
+  assert.strictEqual(el.getAttribute("class"), "icon");
+  assert.strictEqual(el.getAttribute("className"), null);
+});
+
+test('SVG: kebab-case attributes and numbers', () => {
+  const el = Hob.build(["svg", ["path", { "stroke-width": 2, "stroke-opacity": 0.5 }]]);
+  assert.strictEqual(el.firstChild.getAttribute("stroke-width"), "2");
+  assert.strictEqual(el.firstChild.getAttribute("stroke-opacity"), "0.5");
+});
+
+test('SVG: style as string, object and dataset', () => {
+  const str = Hob.build(["svg", { style: "fill: red;" }]);
+  assert.strictEqual(str.style.fill, "red");
+
+  const obj = Hob.build(["svg", { style: { strokeWidth: "3px" } }]);
+  assert.strictEqual(obj.style.strokeWidth, "3px");
+
+  const data = Hob.build(["svg", { dataset: { foo: "bar" } }]);
+  assert.strictEqual(data.getAttribute("data-foo"), "bar");
+});
+
+test('SVG: event handler and textContent stay properties', () => {
+  let clicked = 0;
+  const el = Hob.build(["svg", { onclick: () => { clicked++ } }, ["text", "hi", 42]]);
+  el.dispatchEvent(new dom.window.MouseEvent("click"));
+
+  assert.strictEqual(clicked, 1);
+  assert.strictEqual(el.firstChild.textContent, "hi42");
+});
+
+test('SVG: nested arrays are expanded in place', () => {
+  const el = Hob.build(["svg", [[1, 2].map((r) => ["circle", { r }])]]);
+  assert.strictEqual(el.children.length, 2);
+  assert.strictEqual(el.children[0].namespaceURI, SVG_NS);
+  assert.strictEqual(el.children[1].getAttribute("r"), "2");
+});
+
+test('SVG: functional components inherit the namespace', () => {
+  const Circle = (attrs) => ["circle", attrs];
+  const el = Hob.build(["svg", [Circle, { r: 5 }]]);
+
+  assert.strictEqual(el.children[0].namespaceURI, SVG_NS);
+  assert.strictEqual(el.children[0].getAttribute("r"), "5");
+});
+
+test('SVG: foreignObject switches back to XHTML', () => {
+  const el = Hob.build(["svg", ["foreignObject", ["DIV", { class: "in-svg" }, "html!"]]]);
+  const div = el.firstChild.firstChild;
+
+  assert.strictEqual(el.firstChild.namespaceURI, SVG_NS);
+  assert.strictEqual(div.namespaceURI, XHTML_NS);
+  assert.strictEqual(div.className, "in-svg");
+  assert.strictEqual(div.textContent, "html!");
+});
+
+test('SVG: uppercase svg tag is normalized', () => {
+  const el = Hob.build(["DIV", ["SVG", ["circle"]]]);
+  assert.strictEqual(el.children[0].namespaceURI, SVG_NS);
+  assert.strictEqual(el.children[0].tagName, "svg");
+  assert.strictEqual(el.children[0].firstChild.namespaceURI, SVG_NS);
+});
+
+test('SVG: build(treeArray, SVG_NS) builds a bare fragment', () => {
+  const el = Hob.build(["path", { d: "M0 0" }], Hob.SVG_NS);
+  assert.strictEqual(el.namespaceURI, SVG_NS);
+  assert.strictEqual(el.getAttribute("d"), "M0 0");
+  assert.strictEqual(Hob.SVG_NS, SVG_NS);
+});
+
+test('SVG: setAttr() on an existing SVG element', () => {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  Hob.setAttr(svg, { class: "a", viewBox: "0 0 1 1", "data-v": 1, style: { fill: "red" } });
+
+  assert.strictEqual(svg.getAttribute("class"), "a");
+  assert.strictEqual(svg.getAttribute("viewBox"), "0 0 1 1");
+  assert.strictEqual(svg.getAttribute("data-v"), "1");
+  assert.strictEqual(svg.style.fill, "red");
+});
+
+test('SVG: an existing SVGElement child is passed through as-is', () => {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  const el = Hob.build(["DIV", svg]);
+  assert.strictEqual(el.children[0], svg);
+  assert.strictEqual(el.children[0].namespaceURI, SVG_NS);
 });

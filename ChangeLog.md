@@ -1,5 +1,11 @@
 # ChangeLog
 
+- **2.3.0:** 20260915
+    - feat: build SVG trees (`["svg", ...]` switches to the SVG namespace, `foreignObject` holds XHTML children)
+    - feat: `build(treeArray, ns?)` and `SVG_NS`, to build an SVG fragment without an enclosing `svg` tag
+    - feat: on SVG elements, keys without a writable DOM property are set via `setAttribute` (`class`, `viewBox`, `d`, ...)
+    - docs: add the SVG section to README.md
+
 - **2.2.0:** 20260913
     - fix: many problems
     - feat(package.json): add `types` to `exports`, add `files` and `sideEffects`
